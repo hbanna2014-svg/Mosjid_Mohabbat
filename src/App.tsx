@@ -7,11 +7,12 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Toaster } from '@/components/ui/sonner';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
-import { Building2 as Mosque, Compass as CompassIcon, Bell, BellRing, Settings, MapPin, Volume2, VolumeX, ShieldCheck, Search, ChevronRight, Clock, Settings2, BookOpen, ArrowUpDown, LogIn, LogOut, User as UserIcon, Key, Trash2, Info, History, Phone, Image as ImageIcon, Sparkles, Globe, LayoutDashboard, Plus, Mail, ExternalLink, CloudOff } from 'lucide-react';
+import { Building2 as Mosque, Compass as CompassIcon, Bell, BellRing, Settings, MapPin, Volume2, VolumeX, ShieldCheck, Search, ChevronRight, Clock, Settings2, BookOpen, ArrowUpDown, ArrowLeft, LogIn, LogOut, User as UserIcon, Key, Trash2, Info, History, Phone, Image as ImageIcon, Sparkles, Globe, LayoutDashboard, Plus, Mail, ExternalLink, CloudOff } from 'lucide-react';
 import QiblaFinder from './components/QiblaFinder';
 import AdminPanel from './components/AdminPanel';
 import SuperAdminDashboard from './components/SuperAdminDashboard';
 import Library from './components/Library';
+import PrivacyPolicy from './components/PrivacyPolicy';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -50,6 +51,7 @@ export interface MosqueData {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('mosques');
+  const [showPrivacy, setShowPrivacy] = useState(false);
   const [mosques, setMosques] = useState<MosqueData[]>([]);
   const [selectedMosque, setSelectedMosque] = useState<MosqueData | null>(null);
   const [alertTime, setAlertTime] = useState(5);
@@ -2021,7 +2023,19 @@ export default function App() {
               </TabsContent>
 
               <TabsContent value="profile" className="outline-none">
-                <Card className="bg-white border-[#e2e8f0] shadow-sm rounded-2xl overflow-hidden">
+                {showPrivacy ? (
+                  <div className="space-y-4">
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => setShowPrivacy(false)}
+                      className="mb-2 text-[#64748b] hover:text-[#065f46] text-xs font-bold bg-white w-full rounded-2xl border border-[#e2e8f0]"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" /> প্রোফাইলে ফিরে যান
+                    </Button>
+                    <PrivacyPolicy />
+                  </div>
+                ) : (
+                  <Card className="bg-white border-[#e2e8f0] shadow-sm rounded-2xl overflow-hidden">
                   <CardHeader className="bg-[#f8fafc] border-b border-[#e2e8f0] py-5">
                     <CardTitle className="text-lg font-bold flex items-center gap-2 text-[#1e293b]">
                       <UserIcon className="w-5 h-5 text-[#065f46]" />
@@ -2083,6 +2097,24 @@ export default function App() {
                         >
                           {isProfileLoading ? "আপডেট হচ্ছে..." : "প্রোফাইল আপডেট করুন"}
                         </Button>
+                        <div className="pt-6 border-t border-[#f1f5f9] flex flex-col gap-3">
+                          <Button 
+                            variant="ghost" 
+                            type="button"
+                            onClick={() => setShowPrivacy(true)}
+                            className="w-full text-[#64748b] hover:text-[#065f46] text-[11px] font-bold h-10 rounded-xl"
+                          >
+                            প্রাইভেসি পলিসি (Privacy Policy)
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            type="button"
+                            onClick={() => auth.signOut()}
+                            className="w-full text-red-500 hover:bg-red-50 hover:text-red-600 text-[11px] font-bold h-10 rounded-xl"
+                          >
+                            লগআউট (Sign Out)
+                          </Button>
+                        </div>
                       </form>
                     ) : (
                       <div className="text-center py-8">
@@ -2094,6 +2126,7 @@ export default function App() {
                     )}
                   </CardContent>
                 </Card>
+              )}
               </TabsContent>
 
               {userRole === 'admin' && (
