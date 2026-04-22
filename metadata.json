@@ -1,0 +1,6 @@
+{
+  "name": "Masjid Mohabbat - মসজিদ মহব্বত",
+  "description": "A comprehensive Islamic app named Masjid Mohabbat featuring real-time mosque jama'at times, Quran, Hadith, Duas, and Qibla finder.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": []
+}
