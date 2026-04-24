@@ -7,7 +7,8 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Toaster } from '@/components/ui/sonner';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
-import { Building2 as Mosque, Compass as CompassIcon, Bell, BellRing, Settings, MapPin, Volume2, VolumeX, ShieldCheck, Search, ChevronRight, Clock, Settings2, BookOpen, ArrowUpDown, ArrowLeft, LogIn, LogOut, User as UserIcon, Key, Trash2, Info, History, Phone, Image as ImageIcon, Sparkles, Globe, LayoutDashboard, Plus, Mail, ExternalLink, CloudOff } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Building2 as Mosque, Compass as CompassIcon, Bell, BellRing, Settings, MapPin, Volume2, VolumeX, ShieldCheck, Search, ChevronRight, Clock, Settings2, BookOpen, ArrowUpDown, ArrowLeft, LogIn, LogOut, User as UserIcon, Key, Trash2, Info, History, Phone, Image as ImageIcon, Sparkles, Globe, LayoutDashboard, Plus, Mail, ExternalLink, CloudOff, Sun, Moon } from 'lucide-react';
 import QiblaFinder from './components/QiblaFinder';
 import AdminPanel from './components/AdminPanel';
 import SuperAdminDashboard from './components/SuperAdminDashboard';
@@ -50,6 +51,14 @@ export interface MosqueData {
 }
 
 export default function App() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const [activeTab, setActiveTab] = useState('mosques');
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [mosques, setMosques] = useState<MosqueData[]>([]);
@@ -343,6 +352,9 @@ export default function App() {
         ...doc.data()
       })) as MosqueData[];
       setMosques(mosqueList);
+      
+      // Update persistent cache for offline mode
+      localStorage.setItem('mosques_cache', JSON.stringify(mosqueList));
       
       // Update selected mosque if it exists in the new list
       setSelectedMosque(prev => {
@@ -1399,6 +1411,16 @@ export default function App() {
                 কিবলা
               </button>
             </div>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="w-9 h-9 rounded-full hover:bg-white/10 text-white"
+            >
+              {mounted && (theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />)}
+            </Button>
+
             {user ? (
               <div className="flex items-center gap-2 md:gap-4">
                 <div className="hidden md:flex flex-col items-end">
@@ -1443,9 +1465,9 @@ export default function App() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-hidden flex flex-col md:flex-row bg-[#f8fafc]">
+        <main className="flex-1 overflow-hidden flex flex-col md:flex-row bg-background">
           {/* Mobile View: Tabs */}
-          <div className="md:hidden flex-1 overflow-y-auto p-4 pb-24">
+          <div className="md:hidden flex-1 overflow-y-auto p-4 pb-24 bg-background">
             {isOffline && (
               <div className="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top duration-500">
                 <div className="w-8 h-8 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
@@ -1462,13 +1484,35 @@ export default function App() {
                 <div className="flex flex-col gap-5">
                   <div className="flex items-center justify-between px-1">
                     <div>
-                      <h2 className="text-2xl font-black text-[#1e293b]">নিকটস্থ মসজিদ</h2>
-                      <p className="text-xs text-[#64748b]">আপনার চারপাশের জামায়াতের সময়সূচী</p>
+                      <h2 className="text-2xl font-black text-foreground">নিকটস্থ মসজিদ</h2>
+                      <p className="text-xs text-muted-foreground">আপনার চারপাশের জামায়াতের সময়সূচী</p>
                     </div>
-                    <div className="w-10 h-10 bg-white rounded-xl border border-[#e2e8f0] flex items-center justify-center shadow-sm">
+                    <div className="w-10 h-10 bg-card rounded-xl border border-border flex items-center justify-center shadow-sm">
                       <MapPin className="w-5 h-5 text-[#065f46]" />
                     </div>
                   </div>
+
+                  {userRole === 'admin' && (
+                    <Card className="bg-gradient-to-br from-[#065f46] to-[#047857] text-white border-none shadow-md rounded-2xl overflow-hidden">
+                      <CardContent className="p-4 flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Sparkles className="w-4 h-4 text-emerald-300" />
+                            <h3 className="text-sm font-bold">মসজিদ ম্যানেজমেন্ট</h3>
+                          </div>
+                          <p className="text-[10px] text-emerald-100 opacity-90 leading-tight truncate">
+                            নতুন মসজিদ তালিকাভুক্ত করুন বা আপডেট করুন।
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={() => setActiveTab('dashboard')}
+                          className="bg-white text-[#065f46] hover:bg-emerald-50 h-9 px-4 rounded-xl text-[10px] font-bold shrink-0 shadow-sm border-none"
+                        >
+                          <Plus className="w-3.5 h-3.5 mr-1" /> ম্যানেজ করুন
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {selectedMosque && (
                     <div className="voice-alert p-4 rounded-2xl flex items-center justify-between shadow-sm border-[#fef3c7]">
@@ -1632,22 +1676,22 @@ export default function App() {
                           setSelectedMosque(mosque);
                           setIsDetailModalOpen(true);
                         }}
-                        className={`bg-white border-[#e2e8f0] shadow-sm transition-all overflow-hidden rounded-2xl relative group active:scale-[0.98] ${selectedMosque?.id === mosque.id ? 'border-[#059669] ring-2 ring-[#059669]/10 shadow-md' : 'hover:border-[#cbd5e1]'} ${!mosque.active ? 'opacity-60 grayscale-[0.5]' : ''}`}
+                        className={`bg-card border-border shadow-sm transition-all overflow-hidden rounded-2xl relative group active:scale-[0.98] ${selectedMosque?.id === mosque.id ? 'border-[#059669] ring-2 ring-[#059669]/10 shadow-md' : 'hover:border-[#cbd5e1]'} ${!mosque.active ? 'opacity-60 grayscale-[0.5]' : ''}`}
                       >
                         {!mosque.active && (
-                          <Badge className="absolute top-3 right-3 bg-gray-200 text-gray-600 text-[9px] h-5 px-2 border-none font-bold">
+                          <Badge className="absolute top-3 right-3 bg-muted text-muted-foreground text-[9px] h-5 px-2 border-none font-bold">
                             নিষ্ক্রিয়
                           </Badge>
                         )}
-                        <CardHeader className="pb-2 bg-gradient-to-r from-[#f8fafc] to-white border-b border-[#f1f5f9] p-4">
+                        <CardHeader className="pb-2 bg-gradient-to-r from-background to-card border-b border-border p-4">
                           <div className="flex justify-between items-start">
                             <div className="flex-1 min-w-0 pr-3">
                               <div className="flex items-center gap-2 mb-1">
-                                <CardTitle className="text-base font-bold text-[#1e293b] leading-tight truncate">{mosque.name}</CardTitle>
+                                <CardTitle className="text-base font-bold text-foreground leading-tight truncate">{mosque.name}</CardTitle>
                                 {mosque.active && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />}
                               </div>
-                                <CardDescription className="text-[11px] flex items-center gap-1.5 text-[#64748b]">
-                                  <MapPin className="w-3.5 h-3.5 text-[#94a3b8] shrink-0" /> 
+                                <CardDescription className="text-[11px] flex items-center gap-1.5 text-muted-foreground">
+                                  <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" /> 
                                   <span className="truncate">{mosque.distance || '0km'} away • {mosque.address}</span>
                                 </CardDescription>
                             </div>
@@ -2140,14 +2184,36 @@ export default function App() {
           {/* Desktop View: Three Columns */}
           <div className="hidden md:flex flex-1 overflow-hidden">
             {/* Left Sidebar: Mosque List */}
-            <div className="w-80 border-r border-[#e2e8f0] bg-white flex flex-col">
-              <div className="p-4 border-b border-[#f1f5f9]">
+            <div className="w-80 border-r border-border bg-card flex flex-col">
+              <div className="p-4 border-b border-border">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-bold text-[#64748b] uppercase tracking-wider">নিকটস্থ মসজিদসমূহ</h3>
+                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">নিকটস্থ মসজিদসমূহ</h3>
                 </div>
+
+                {userRole === 'admin' && (
+                  <div className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 rounded-2xl shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg flex items-center justify-center shrink-0">
+                        <LayoutDashboard className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[11px] font-bold text-emerald-900 dark:text-emerald-300 leading-tight mb-1">প্রশাসনিক প্যানেল</p>
+                        <p className="text-[10px] text-emerald-700 dark:text-emerald-400 leading-tight mb-3">নতুন মসজিদ যোগ করতে ড্যাশবোর্ড ব্যবহার করুন</p>
+                        <Button 
+                          size="sm"
+                          onClick={() => setActiveTab('dashboard')}
+                          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-[9px] rounded-lg font-bold shadow-sm"
+                        >
+                          <Plus className="w-3 h-3 mr-1" /> ড্যাশবোর্ড ওপেন করুন
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold text-[#64748b] uppercase">স্ট্যাটাস ও অবস্থান</Label>
+                    <Label className="text-[10px] font-bold text-muted-foreground uppercase">স্ট্যাটাস ও অবস্থান</Label>
                     <div className="space-y-2.5">
                        <select 
                         value={statusFilter}
@@ -2198,12 +2264,12 @@ export default function App() {
                         <option value="Isha">এশা</option>
                       </select>
                       <div className="flex-[1.5] relative">
-                        <Clock className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94a3b8]" />
+                        <Clock className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                         <Input 
                           value={timeSearchFilter}
                           onChange={(e) => setTimeSearchFilter(e.target.value)}
                           placeholder="সময় (উদা: 1:30)"
-                          className="w-full pl-8 pr-2 py-2 h-9 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-[10px] font-bold focus:ring-[#065f46]"
+                          className="w-full pl-8 pr-2 py-2 h-9 bg-background border border-border rounded-xl text-[10px] font-bold focus:ring-primary"
                         />
                       </div>
                     </div>
@@ -2252,7 +2318,7 @@ export default function App() {
                   </Button>
                 )}
               </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/20">
                 {filteredMosques.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">

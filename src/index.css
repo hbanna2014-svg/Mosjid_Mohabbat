@@ -1,28 +1,68 @@
 @import "tailwindcss";
 
+@layer base {
+  :root {
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --primary: #065f46;
+    --primary-foreground: #ffffff;
+    --secondary: #64748b;
+    --secondary-foreground: #1e293b;
+    --accent: #10b981;
+    --accent-foreground: #ffffff;
+    --border: #e2e8f0;
+    --input: #f1f5f9;
+    --ring: #10b981;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+  }
+
+  .dark {
+    --background: #020617;
+    --foreground: #f8fafc;
+    --card: #0f172a;
+    --card-foreground: #f8fafc;
+    --primary: #10b981;
+    --primary-foreground: #020617;
+    --secondary: #1e293b;
+    --secondary-foreground: #f8fafc;
+    --accent: #059669;
+    --accent-foreground: #ffffff;
+    --border: #1e293b;
+    --input: #1e293b;
+    --ring: #059669;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+  }
+}
+
 @theme {
   --font-sans: "Inter", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Cormorant Garamond", "Playfair Display", serif;
   --font-arabic: "Amiri", "Lateef", serif;
   
-  --color-primary: #065f46;
-  --color-primary-foreground: #ffffff;
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
   
-  --color-secondary: #64748b;
-  --color-secondary-foreground: #1e293b;
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   
-  --color-accent: #10b981;
-  --color-accent-foreground: #ffffff;
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   
-  --color-background: #f8fafc;
-  --color-foreground: #0f172a;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
   
-  --color-card: #ffffff;
-  --color-card-foreground: #0f172a;
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   
-  --color-border: #e2e8f0;
-  --color-input: #f1f5f9;
-  --color-ring: #10b981;
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
   
   --radius-sm: 0.6rem;
   --radius-md: 0.8rem;
@@ -38,24 +78,22 @@
 
 @layer base {
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased transition-colors duration-300;
   }
 }
 
 .map-pattern {
-  background-image: radial-gradient(#cbd5e1 0.5px, transparent 0.5px);
+  background-image: radial-gradient(var(--border) 0.5px, transparent 0.5px);
   background-size: 24px 24px;
 }
 
 .geofence-circle {
-  border: 2px dashed #10b981;
+  border: 2px dashed var(--accent);
   background: rgba(16, 185, 129, 0.03);
 }
 
 .voice-alert {
-  background: #fffbeb;
-  color: #92400e;
-  border: 1px solid #fef3c7;
+  @apply bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 border-amber-100 dark:border-amber-900/50;
 }
 
 @keyframes pulse-ring {

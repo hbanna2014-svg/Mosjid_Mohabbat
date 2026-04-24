@@ -20,7 +20,10 @@ import {
   RefreshCw,
   Plus,
   Play,
-  Pause
+  Pause,
+  Type,
+  Minus,
+  Plus as PlusIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -410,6 +413,7 @@ function HadithModule() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeView, setActiveView] = useState<'books' | 'subjects'>('books');
+  const [fontSize, setFontSize] = useState(18);
   
   const subjects = [
     { name: 'ঈমান (Faith)', icon: '📖' },
@@ -421,19 +425,36 @@ function HadithModule() {
     { name: 'জ্ঞান (Knowledge)', icon: '🎓' },
   ];
 
+  const adjustFontSize = (delta: number) => {
+    setFontSize(prev => Math.min(Math.max(prev + delta, 12), 40));
+  };
+
   useEffect(() => {
     if (activeBook) {
-      setIsLoading(true);
+      const cacheKey = `mc_hadith_cache_${activeBook}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        setHadiths(JSON.parse(cached));
+      } else {
+        setIsLoading(true);
+      }
+      
       fetch(`https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/${activeBook}.json`)
         .then(res => res.json())
         .then(data => {
-          setHadiths(data.hadiths || []);
+          const hadithData = data.hadiths || [];
+          setHadiths(hadithData);
+          localStorage.setItem(cacheKey, JSON.stringify(hadithData));
           setIsLoading(false);
         })
         .catch(err => {
           console.error(err);
           setIsLoading(false);
-          toast.error("হাদিস লোড করা সম্ভব হয়নি");
+          if (cached) {
+            toast.info("অফলাইন মোড: পূর্বের হাদিসগুলো দেখানো হচ্ছে।");
+          } else {
+            toast.error("হাদিস লোড করা সম্ভব হয়নি। ইন্টারনেট কানেকশন চেক করুন।");
+          }
         });
     }
   }, [activeBook]);
@@ -441,6 +462,9 @@ function HadithModule() {
   const filteredHadiths = hadiths.filter(h => 
     searchQuery === '' || h.text.toLowerCase().includes(searchQuery.toLowerCase())
   ).slice(0, 50);
+
+  // Helper to check if text contains Arabic characters
+  const containsArabic = (text: string) => /[\u0600-\u06FF]/.test(text);
 
   return (
     <div className="space-y-6">
@@ -458,7 +482,7 @@ function HadithModule() {
         <Input 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="হাদিস বা বিষয় দিয়ে কুঁজুন..." 
+          placeholder="হাদিস বা বিষয় দিয়ে খুঁজুন..." 
           className="pl-10 rounded-2xl border-[#e2e8f0]"
         />
       </div>
@@ -507,7 +531,7 @@ function HadithModule() {
         )
       ) : (
         <div className="space-y-6">
-          <div className="flex items-center justify-between bg-white p-3 rounded-2xl border border-[#e2e8f0]">
+          <div className="flex flex-wrap gap-3 items-center justify-between bg-white p-3 rounded-2xl border border-[#e2e8f0]">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -515,16 +539,40 @@ function HadithModule() {
                 setActiveBook(null);
                 setHadiths([]);
               }}
-              className="text-xs text-[#065f46] font-bold"
+              className="text-xs text-blue-700 font-bold hover:bg-blue-50"
             >
               <ArrowLeft className="w-4 h-4 mr-1" /> গ্রন্থ তালিকা
             </Button>
+            
+            <div className="flex items-center gap-1.5 p-1 bg-[#f8fafc] rounded-xl border border-[#f1f5f9]">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => adjustFontSize(-2)}
+                className="w-7 h-7 rounded-lg text-blue-700 hover:bg-white"
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </Button>
+              <div className="flex items-center gap-1 px-1.5 border-x border-[#e2e8f0]">
+                <Type className="w-3.5 h-3.5 text-blue-400" />
+                <span className="text-[10px] font-bold text-blue-700 min-w-[20px] text-center">{fontSize}</span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => adjustFontSize(2)}
+                className="w-7 h-7 rounded-lg text-blue-700 hover:bg-white"
+              >
+                <PlusIcon className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+
             <Badge className="bg-blue-50 text-blue-700 border-none">
               {HADITH_BOOKS.find(b => b.id === activeBook)?.name}
             </Badge>
           </div>
 
-          <div className="space-y-4 pb-12">
+          <div className="space-y-6 pb-12">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
@@ -535,18 +583,28 @@ function HadithModule() {
                 <Info className="w-12 h-12 text-blue-200 mx-auto mb-4" />
                 <p className="text-sm text-[#64748b] italic">কোন হাদিস পাওয়া যায়নি</p>
               </div>
-            ) : filteredHadiths.map((h, i) => (
-              <Card key={i} className="bg-white border-[#e2e8f0] shadow-sm rounded-3xl overflow-hidden">
-                <CardHeader className="bg-blue-50/30 border-b border-blue-50 p-4">
-                  <span className="text-[10px] font-bold text-blue-700 uppercase">হাদিস নং. {h.hadithnumber || i + 1}</span>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  <p className="text-sm text-[#334155] leading-relaxed font-serif">
-                    {h.text}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+            ) : filteredHadiths.map((h, i) => {
+              const isArabic = containsArabic(h.text);
+              return (
+                <Card key={i} className="bg-white border-[#e2e8f0] shadow-sm rounded-3xl overflow-hidden">
+                  <CardHeader className="bg-blue-50/30 border-b border-blue-50 p-4 py-3">
+                    <span className="text-[10px] font-bold text-blue-700 uppercase">হাদিস নং. {h.hadithnumber || i + 1}</span>
+                  </CardHeader>
+                  <CardContent className="p-6 md:p-8 space-y-6">
+                    <p 
+                      className={`text-[#1e293b] leading-[1.8] ${isArabic ? 'font-arabic text-right mb-4' : 'font-serif opacity-90'}`}
+                      style={{ 
+                        fontSize: `${isArabic ? fontSize + 8 : fontSize}px`,
+                        direction: isArabic ? 'rtl' : 'ltr'
+                      }}
+                    >
+                      {h.text}
+                    </p>
+                    {isArabic && <div className="h-[1px] w-full bg-[#f1f5f9]" />}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}
@@ -653,9 +711,16 @@ function MasalaModule({ userRole }: { userRole: string | null }) {
   const categories = ['all', 'ওযু ও পবিত্রতা', 'সালাত (নামাজ)', 'রোজা ও রমজান', 'যাকাত ও সাদাকাহ', 'বিয়ে ও পরিবার', 'পারিবারিক ও সামাজিক', 'অন্যান্য'];
 
   useEffect(() => {
+    const cached = localStorage.getItem('mc_masayel_cache');
+    if (cached) {
+      setMasayel(JSON.parse(cached));
+    }
+
     const q = query(collection(db, 'masayel'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMasayel(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setMasayel(data);
+      localStorage.setItem('mc_masayel_cache', JSON.stringify(data));
     });
     return () => unsubscribe();
   }, []);
